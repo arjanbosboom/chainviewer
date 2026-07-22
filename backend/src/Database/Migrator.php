@@ -9,14 +9,21 @@ use RuntimeException;
 
 final class Migrator
 {
+    /**
+     * The migrator applies pending schema files in filename order.
+     */
     public function __construct(
         private readonly PDO $pdo,
         private readonly string $migrationsPath,
     ) {
     }
 
+    /**
+     * Apply every migration that has not already been recorded.
+     */
     public function run(): void
     {
+        // Keep a local record so repeated runs stay idempotent.
         $this->ensureRepositoryTable();
 
         $appliedMigrations = $this->getAppliedMigrations();
@@ -35,6 +42,7 @@ final class Migrator
                 throw new RuntimeException(sprintf('Migration %s must return an instance of %s.', $migrationName, MigrationInterface::class));
             }
 
+            // Each migration is wrapped in a transaction to avoid partial schema state.
             $this->pdo->beginTransaction();
 
             try {
@@ -53,6 +61,7 @@ final class Migrator
 
     private function ensureRepositoryTable(): void
     {
+        // Track which migration files have already been applied.
         $this->pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS schema_migrations (

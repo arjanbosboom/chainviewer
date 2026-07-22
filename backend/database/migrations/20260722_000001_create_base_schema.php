@@ -5,8 +5,12 @@ declare(strict_types=1);
 use ChainViewer\Database\MigrationInterface;
 
 return new class () implements MigrationInterface {
+    /**
+     * Build the initial chain-aware explorer schema.
+     */
     public function up(PDO $pdo): void
     {
+        // One row per supported coin keeps each network isolated.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS chains (
@@ -25,6 +29,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Blocks are keyed by chain so multiple networks can share the same database.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS blocks (
@@ -54,6 +59,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Transactions link back to their chain and block for fast lookup.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS transactions (
@@ -77,6 +83,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Inputs and outputs are split so balance and history queries stay simple.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS transaction_inputs (
@@ -119,6 +126,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Address tables power address pages, balances, and transaction history.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS addresses (
@@ -136,6 +144,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Cached balances avoid recalculating totals on every request.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS address_balances (
@@ -152,6 +161,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Address transactions provide a fast history view.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS address_transactions (
@@ -171,6 +181,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Statistics are stored as key/value pairs so new metrics can be added incrementally.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS statistics (
@@ -186,6 +197,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Rich list entries are stored separately so ranking updates stay cheap.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS richlist (
@@ -203,6 +215,7 @@ return new class () implements MigrationInterface {
             SQL
         );
 
+        // Network and sync tables allow the UI to show live status for each chain.
         $pdo->exec(
             <<<SQL
             CREATE TABLE IF NOT EXISTS network_status (
@@ -238,6 +251,9 @@ return new class () implements MigrationInterface {
         );
     }
 
+    /**
+     * Roll back the initial schema in reverse dependency order.
+     */
     public function down(PDO $pdo): void
     {
         $pdo->exec('DROP TABLE IF EXISTS sync_status');
