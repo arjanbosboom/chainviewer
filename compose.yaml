@@ -1,0 +1,33 @@
+services:
+  web:
+    image: nginx:1.27-alpine
+    depends_on:
+      - app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: chainviewer
+      MARIADB_USER: chainviewer
+      MARIADB_PASSWORD: chainviewer
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

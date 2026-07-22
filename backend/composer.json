@@ -1,0 +1,16 @@
+{
+    "name": "chainviewer/backend",
+    "description": "ChainViewer multi-chain blockchain explorer backend",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "ChainViewer\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
